@@ -5,31 +5,47 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateFashionDesign = async (prefs: UserPreferences): Promise<GeneratedDesign> => {
   if (!prefs.selectedStyle) throw new Error("No style selected");
+  if (!prefs.gender) throw new Error("No gender selected");
 
   const sentiments = Object.values(prefs.quizAnswers).join(", ");
   
-  // Construct a rich prompt for the Bangladeshi 3-piece context
+  const isFemale = prefs.gender === 'Female';
+  const garmentType = isFemale 
+    ? 'Bangladeshi "Three-Piece" suit (Salwar Kameez, Dupatta)'
+    : 'Bangladeshi Men\'s Ethnic Wear (Panjabi, Pajama, optionally with Waistcoat/Vest)';
+
+  const targetAudience = `Modern Bangladeshi ${prefs.gender} (Age 24-35)`;
+
+  const designDetails = isFemale
+    ? `- The Kamiz (top) should feature intricate details matching the vibe.
+       - The Dupatta (scarf) should be draped elegantly.
+       - Visual Style: High resolution, editorial fashion photography, cinematic lighting.
+       - Include specific fabric textures (e.g., Jamdani weave, Silk sheen, Cotton texture) based on the profile.`
+    : `- The Panjabi (top) should have a modern yet traditional cut.
+       - If the style implies it, include a stylish waistcoat (Mujib coat style or modern vest).
+       - Focus on collar details, button placements, and fabric quality.
+       - Visual Style: High resolution, editorial fashion photography, cinematic lighting.
+       - Fabrics: Cotton, Linen, Silk, or Khadi based on vibe.`;
+
+  // Construct a rich prompt
   const prompt = `
-    Fashion Design Request: Create a photorealistic, high-fashion image of a Bangladeshi "Three-Piece" suit (Salwar Kameez, Dupatta).
+    Fashion Design Request: Create a photorealistic, high-fashion image of a ${garmentType}.
     
     Base Style: ${prefs.selectedStyle.name} - ${prefs.selectedStyle.description}.
     
-    Target Audience: Modern Bangladeshi woman (Age 24-35).
+    Target Audience: ${targetAudience}.
     
     Psychological Profile/Vibe: ${sentiments}.
     
     Design Details:
-    - The Kamiz (top) should feature intricate details matching the vibe.
-    - The Dupatta (scarf) should be draped elegantly.
-    - Visual Style: High resolution, editorial fashion photography, cinematic lighting. 
-    - Include specific fabric textures (e.g., Jamdani weave, Silk sheen, Cotton texture) based on the profile.
-    - If the vibe is 'vibrant', use bright colors. If 'calm', use pastels.
+    ${designDetails}
     
+    If the vibe is 'vibrant', use bold colors. If 'calm', use muted tones.
     Return the result as if it is a fashion magazine cover.
   `;
 
   try {
-    // 1. Generate the Image using Nano Banana (gemini-2.5-flash-image)
+    // 1. Generate the Image
     const imageResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -59,13 +75,12 @@ export const generateFashionDesign = async (prefs: UserPreferences): Promise<Gen
     }
 
     // 2. Generate a text description/analysis explaining WHY this was designed
-    // We use a lighter text model for this quick explanation
     const textResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `
             Based on these personality traits: "${sentiments}" and the base style "${prefs.selectedStyle.name}", 
-            write a short, alluring 2-sentence description of a fashion design created for a Bangladeshi woman.
-            Explain how the design reflects her inner self.
+            write a short, alluring 2-sentence description of a fashion design created for a Bangladeshi ${prefs.gender}.
+            Explain how the design reflects their inner self.
         `,
     });
 

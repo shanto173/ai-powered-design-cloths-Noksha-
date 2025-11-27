@@ -1,24 +1,42 @@
 import React from 'react';
 import { PRESET_STYLES } from '../constants';
-import { DesignStyle } from '../types';
+import { DesignStyle, Gender } from '../types';
 
 interface DesignSelectorProps {
+  gender: Gender | null;
   onSelect: (style: DesignStyle) => void;
+  onBack: () => void;
 }
 
-const DesignSelector: React.FC<DesignSelectorProps> = ({ onSelect }) => {
+const DesignSelector: React.FC<DesignSelectorProps> = ({ gender, onSelect, onBack }) => {
+  const filteredStyles = PRESET_STYLES.filter(s => s.gender === gender);
+
   return (
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+            <button 
+                onClick={onBack}
+                className="flex items-center text-gray-500 hover:text-brand-700 transition-colors"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                Back to Gender Selection
+            </button>
+        </div>
+        
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-serif text-gray-900 mb-4">Choose Your Base Aesthetic</h2>
+          <h2 className="text-3xl font-serif text-gray-900 mb-4">
+             {gender === 'Male' ? "Gentlemen's Edit" : "Ladies' Collection"}
+          </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Select a style that resonates with your wardrobe needs. We will customize it based on your personality in the next step.
+            Select a base style. We will customize it based on your personality in the next step.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {PRESET_STYLES.map((style) => (
+          {filteredStyles.map((style) => (
             <div 
               key={style.id}
               onClick={() => onSelect(style)}

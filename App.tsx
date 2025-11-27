@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { AppStep, DesignStyle, UserPreferences } from './types';
+import { AppStep, DesignStyle, Gender, UserPreferences } from './types';
 import Hero from './components/Hero';
+import GenderSelector from './components/GenderSelector';
 import DesignSelector from './components/DesignSelector';
 import Quiz from './components/Quiz';
 import Generator from './components/Generator';
@@ -8,14 +9,25 @@ import Generator from './components/Generator';
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>(AppStep.LANDING);
   const [preferences, setPreferences] = useState<UserPreferences>({
+    gender: null,
     selectedStyle: null,
     quizAnswers: {},
   });
 
   const handleStart = () => {
-    setStep(AppStep.STYLE_SELECTION);
-    // Scroll to top
+    setStep(AppStep.GENDER_SELECTION);
     window.scrollTo(0, 0);
+  };
+
+  const handleGenderSelect = (gender: Gender) => {
+    setPreferences(prev => ({ ...prev, gender }));
+    setStep(AppStep.STYLE_SELECTION);
+    window.scrollTo(0, 0);
+  };
+
+  const handleBackToGender = () => {
+    setStep(AppStep.GENDER_SELECTION);
+    setPreferences(prev => ({ ...prev, gender: null }));
   };
 
   const handleStyleSelect = (style: DesignStyle) => {
@@ -31,7 +43,7 @@ const App: React.FC = () => {
   };
 
   const handleRestart = () => {
-    setPreferences({ selectedStyle: null, quizAnswers: {} });
+    setPreferences({ gender: null, selectedStyle: null, quizAnswers: {} });
     setStep(AppStep.LANDING);
     window.scrollTo(0, 0);
   };
@@ -56,9 +68,19 @@ const App: React.FC = () => {
       <main>
         {step === AppStep.LANDING && <Hero onStart={handleStart} />}
         
+        {step === AppStep.GENDER_SELECTION && (
+            <div className="animate-fade-in">
+                <GenderSelector onSelect={handleGenderSelect} />
+            </div>
+        )}
+
         {step === AppStep.STYLE_SELECTION && (
           <div className="animate-fade-in">
-            <DesignSelector onSelect={handleStyleSelect} />
+            <DesignSelector 
+                gender={preferences.gender} 
+                onSelect={handleStyleSelect}
+                onBack={handleBackToGender}
+            />
           </div>
         )}
         

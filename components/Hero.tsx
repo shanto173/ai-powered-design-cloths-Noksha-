@@ -14,13 +14,13 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
       <div className="relative z-10 max-w-2xl">
         <h2 className="text-brand-700 tracking-widest text-sm font-bold uppercase mb-4">
-          For the Modern Bengali Woman
+          For the Modern Bengali Spirit
         </h2>
         <h1 className="font-serif text-5xl md:text-7xl text-gray-900 mb-6 leading-tight">
           Noksha <span className="text-brand-500 italic">AI</span>
         </h1>
         <p className="text-gray-600 text-lg md:text-xl mb-8 font-light">
-          Where tradition meets your inner self. Discover three-piece designs tailored not just to your body, but to your personality.
+          Where tradition meets your inner self. Discover personalized ethnic wear tailored not just to your body, but to your personality.
         </p>
         <button
           onClick={onStart}

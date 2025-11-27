@@ -1,10 +1,13 @@
 export enum AppStep {
   LANDING = 'LANDING',
+  GENDER_SELECTION = 'GENDER_SELECTION',
   STYLE_SELECTION = 'STYLE_SELECTION',
   PSYCH_QUIZ = 'PSYCH_QUIZ',
   GENERATING = 'GENERATING',
   RESULT = 'RESULT',
 }
+
+export type Gender = 'Male' | 'Female';
 
 export interface DesignStyle {
   id: string;
@@ -12,6 +15,7 @@ export interface DesignStyle {
   description: string;
   imageUrl: string;
   category: 'Modern' | 'Traditional' | 'Fusion';
+  gender: Gender;
 }
 
 export interface QuizQuestion {
@@ -32,6 +36,7 @@ export interface GeneratedDesign {
 }
 
 export interface UserPreferences {
+  gender: Gender | null;
   selectedStyle: DesignStyle | null;
   quizAnswers: Record<number, string>; // questionId -> sentiment
 }
