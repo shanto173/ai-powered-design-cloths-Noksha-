@@ -3,6 +3,11 @@ import { UserPreferences, GeneratedDesign } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+// Helper to strip data URI scheme
+const stripBase64 = (dataUri: string) => {
+  return dataUri.split(',')[1] || dataUri;
+};
+
 export const generateFashionDesign = async (prefs: UserPreferences): Promise<GeneratedDesign> => {
   if (!prefs.selectedStyle) throw new Error("No style selected");
   if (!prefs.gender) throw new Error("No gender selected");
@@ -28,7 +33,7 @@ export const generateFashionDesign = async (prefs: UserPreferences): Promise<Gen
        - Fabrics: Cotton, Linen, Silk, or Khadi based on vibe.`;
 
   // Construct a rich prompt
-  const prompt = `
+  let prompt = `
     Fashion Design Request: Create a photorealistic, high-fashion image of a ${garmentType}.
     
     Base Style: ${prefs.selectedStyle.name} - ${prefs.selectedStyle.description}.
@@ -44,12 +49,28 @@ export const generateFashionDesign = async (prefs: UserPreferences): Promise<Gen
     Return the result as if it is a fashion magazine cover.
   `;
 
+  const parts: any[] = [];
+  
+  // If user uploaded an image for inspiration
+  if (prefs.uploadedImage) {
+    prompt += `\n\nIMPORTANT: I have attached a reference image. Use this image as inspiration for the fabric patterns, color palette, or texture of the generated outfit. Incorporate elements from this inspiration image into the ${prefs.selectedStyle.name} style.`;
+    
+    parts.push({
+        inlineData: {
+            mimeType: 'image/png', // Assuming png/jpeg, gemini handles standard types
+            data: stripBase64(prefs.uploadedImage)
+        }
+    });
+  }
+
+  parts.push({ text: prompt });
+
   try {
     // 1. Generate the Image
     const imageResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
-        parts: [{ text: prompt }],
+        parts: parts,
       },
       config: {
         imageConfig: {
@@ -92,6 +113,67 @@ export const generateFashionDesign = async (prefs: UserPreferences): Promise<Gen
 
   } catch (error) {
     console.error("Gemini API Error:", error);
+    throw error;
+  }
+};
+
+export const editFashionDesign = async (
+  originalImageBase64: string, 
+  maskImageBase64: string, 
+  targetColor: string
+): Promise<string> => {
+  const prompt = `
+    I have provided two images. 
+    1. The first image is a fashion design.
+    2. The second image is a black and white mask.
+    
+    Task: Change the color of the garment area in the first image that corresponds to the WHITE area in the second image (mask) to the color "${targetColor}".
+    
+    - Maintain the original texture, folds, shadows, and lighting of the fabric.
+    - Only change the color of the masked region.
+    - Do not change the background or the person's skin/face.
+    - Return the modified image.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          { 
+            text: prompt 
+          },
+          { 
+            inlineData: {
+              mimeType: 'image/png',
+              data: stripBase64(originalImageBase64)
+            }
+          },
+          { 
+            inlineData: {
+              mimeType: 'image/png',
+              data: stripBase64(maskImageBase64)
+            }
+          }
+        ],
+      },
+    });
+
+    let newImageUrl = '';
+    if (response.candidates && response.candidates[0].content.parts) {
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.data) {
+                newImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+                break;
+            }
+        }
+    }
+    
+    if (!newImageUrl) throw new Error("Failed to generate edited image");
+    return newImageUrl;
+
+  } catch (error) {
+    console.error("Gemini Edit Error:", error);
     throw error;
   }
 };

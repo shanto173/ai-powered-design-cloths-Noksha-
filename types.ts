@@ -5,6 +5,7 @@ export enum AppStep {
   PSYCH_QUIZ = 'PSYCH_QUIZ',
   GENERATING = 'GENERATING',
   RESULT = 'RESULT',
+  HISTORY = 'HISTORY',
 }
 
 export type Gender = 'Male' | 'Female';
@@ -35,8 +36,16 @@ export interface GeneratedDesign {
   sentimentAnalysis: string;
 }
 
+export interface SavedDesign extends GeneratedDesign {
+  id: string;
+  timestamp: number;
+  styleName: string;
+  gender: Gender;
+}
+
 export interface UserPreferences {
   gender: Gender | null;
   selectedStyle: DesignStyle | null;
   quizAnswers: Record<number, string>; // questionId -> sentiment
+  uploadedImage: string | null; // Base64 string
 }
